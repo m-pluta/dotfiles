@@ -10,12 +10,10 @@ alias rmid='rm *:Zone.Identifier'
 alias squeue="squeue -l"
 alias q="squeue"
 alias myq="squeue -u $USER"
-alias scancel-all="scancel --user=$USER"
 
 # Python venv
 alias venv='python -m venv .venv && srcv'
 alias srcv='source .venv/bin/activate'
-# alias redo-src='srcv && source .env'
 
 # Nix
 alias rebuild='sudo nixos-rebuild switch --flake ~/nixos#mikey'
@@ -27,12 +25,9 @@ alias dc="docker-compose"
 alias remake='make clean && make'
 alias rust-book='pushd /home/mikey/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/share/doc/rust/html && python -m http.server && popd'
 alias clear-sockets='rm -f ~/.ssh/sockets/*'
-
 alias za='zellij attach'
 alias cloc='tokei'
 alias j='jj'
-alias st='jj st'
-# alias vim='hx'
 alias ls='eza --icons=always'
 alias tree='eza --icons=always -T --group-directories-last --git-ignore'
 alias cat='bat'

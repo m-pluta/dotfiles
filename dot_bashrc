@@ -156,10 +156,17 @@ export PATH="$PATH:$(yarn global bin)"
 
 # uv
 export PATH="/home/mikey/snap/code/217/.local/share/../bin:$PATH"
-source ~/.bash_aliases
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 export DIRENV_LOG_FORMAT=""
+
+# Give each Claude Code session its own TMPDIR, so tools that write
+# temp files (mktemp, python tempfile, etc.) don't collide across
+# concurrent sessions. Only takes effect inside a Claude Code session.
+if [ -n "$CLAUDE_CODE_SESSION_ID" ]; then
+    export TMPDIR="/tmp/claude/$CLAUDE_CODE_SESSION_ID"
+    mkdir -p "$TMPDIR" 2>/dev/null
+fi

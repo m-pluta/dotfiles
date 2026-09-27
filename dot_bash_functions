@@ -253,3 +253,24 @@ flagman() {
   echo "$out" | less +/"$escaped"
 }
 
+# Prompt to delete /tmp/claude/* session dirs older than 30 days.
+prune-claude() {
+    local dirs=()
+    while IFS= read -r -d '' d; do
+        dirs+=("$d")
+    done < <(find /tmp/claude -maxdepth 1 -mindepth 1 -type d -mtime +30 -print0 2>/dev/null)
+
+    if [ "${#dirs[@]}" -eq 0 ]; then
+        echo "No /tmp/claude session dirs older than 30 days."
+        return 0
+    fi
+
+    echo "The following session dirs are older than 30 days:"
+    printf '  %s\n' "${dirs[@]}"
+    read -r -p "Delete these ${#dirs[@]} dir(s)? [y/N] " reply
+    case "$reply" in
+        [yY]|[yY][eE][sS]) rm -rf -- "${dirs[@]}" && echo "Deleted." ;;
+        *) echo "Aborted." ;;
+    esac
+}
+
