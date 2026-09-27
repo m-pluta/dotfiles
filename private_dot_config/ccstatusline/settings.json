@@ -1,0 +1,89 @@
+{
+  "version": 4,
+  "lines": [
+    [
+      {
+        "id": "533888b6-94cd-4340-9118-e9dae0f2bfe2",
+        "type": "context-bar",
+        "color": "brightWhite"
+      },
+      {
+        "id": "8746f231-f7c0-46fe-91c5-298bdc2bc4e2",
+        "type": "flex-separator"
+      },
+      {
+        "id": "e6362bfa-3b85-431d-8505-c88815e5f21f",
+        "type": "reset-timer",
+        "color": "brightBlack"
+      },
+      {
+        "id": "3fd5dbba-126b-4053-8b7e-05934dc6dbe5",
+        "type": "separator"
+      },
+      {
+        "id": "74422e7f-0e92-4e7c-b35f-fc767c5b153c",
+        "type": "session-usage",
+        "color": "brightYellow"
+      }
+    ],
+    [
+      {
+        "id": "08a81cdd-23b9-47a3-b49a-b13c0d812224",
+        "type": "model",
+        "color": "cyan"
+      },
+      {
+        "id": "54940f05-c1e1-49fb-9291-d1d8d48e3547",
+        "type": "separator"
+      },
+      {
+        "id": "6019d432-5668-4810-aa0d-1141552c5399",
+        "type": "thinking-effort",
+        "color": "brightCyan"
+      },
+      {
+        "id": "f59d7e9b-58bf-4d58-b2bd-83435c2eebe4",
+        "type": "flex-separator"
+      },
+      {
+        "id": "302abd05-3c36-4ce9-b6a5-15b0e913bda6",
+        "type": "weekly-reset-timer",
+        "color": "brightBlack"
+      },
+      {
+        "id": "2abdac22-6dde-40c1-8e76-4de90c7738ab",
+        "type": "separator"
+      },
+      {
+        "id": "46d7b7fb-0f43-4f12-9231-cc98acc61c7e",
+        "type": "weekly-usage",
+        "color": "brightYellow"
+      }
+    ],
+    [
+      {
+        "id": "6b7f6c9d-b3b3-4457-a6f7-c72bfbd3500b",
+        "type": "skills"
+      }
+    ]
+  ],
+  "flexMode": "full-minus-40",
+  "compactThreshold": 60,
+  "colorLevel": 2,
+  "inheritSeparatorColors": false,
+  "globalBold": false,
+  "minimalistMode": false,
+  "powerline": {
+    "enabled": false,
+    "separators": [
+      ""
+    ],
+    "separatorInvertBackground": [
+      false
+    ],
+    "startCaps": [],
+    "endCaps": [],
+    "autoAlign": false,
+    "continueThemeAcrossLines": false
+  }
+}

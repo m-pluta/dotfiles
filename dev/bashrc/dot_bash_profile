@@ -1,0 +1,25 @@
+# if running bash
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+	. "$HOME/.bashrc"
+    fi
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+
+# uv
+export PATH="/home/mikey/snap/code/217/.local/share/../bin:$PATH"
+. "$HOME/.cargo/env"
+
+if [ -e /home/mikey/.nix-profile/etc/profile.d/nix.sh ]; then . /home/mikey/.nix-profile/etc/profile.d/nix.sh; fi # added by Nix installer
+
+export PATH=$PATH:/home/mikey/.spicetify

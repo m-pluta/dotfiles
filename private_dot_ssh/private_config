@@ -1,0 +1,72 @@
+Host *
+  ControlMaster auto
+  ControlPath ~/.ssh/sockets/%r@%h:%p
+  ControlPersist 7200
+  ForwardAgent yes
+  SetEnv TERM=xterm-256color
+
+Host mikelab
+  User mikey
+
+# Specific hosts
+Host github.com
+  User git
+  HostName github.com
+  IdentityFile ~/.ssh/github
+  ControlMaster no
+
+Host indy
+  HostName 149.165.159.173
+#   HostName 149.165.169.20
+#   HostName 149.165.168.146
+  User exouser
+  IdentityFile ~/.ssh/indy
+
+Host archer2
+  HostName login.archer2.ac.uk
+  User ta210plut1
+  IdentityFile ~/.ssh/archer2
+
+Host hamilton
+  HostName hamilton8.dur.ac.uk
+  User vsdc48
+
+Host ncc
+  HostName ncc1.clients.dur.ac.uk
+  User vsdc48
+  ProxyJump hamilton
+
+Host cosma
+  User dc-plut1
+  IdentityFile ~/.ssh/cosma
+  # ProxyJump hamilton
+  HostName login.cosma.dur.ac.uk
+  ForwardX11 yes
+
+Host rocky
+  User rocky
+  HostName clusdur-node01.clients.dur.ac.uk
+  ProxyJump hamilton
+
+Host login8b
+  User dc-plut1
+  ProxyJump cosma
+  LocalForward 8444 login8b:443
+  ExitOnForwardFailure yes
+
+Host mad06
+  User dc-plut1
+  ProxyJump cosma
+  LocalForward 8443 mad06:443
+  # LocalForward 8080 mad06:8080
+  ExitOnForwardFailure yes
+
+Host gn001
+  User dc-plut1
+  ProxyJump cosma
+  LocalForward 8445 login8b:443
+  ExitOnForwardFailure yes
+
+Host durhack
+  User hpl
+  HostName team23-server.durhack.qwerty.technology

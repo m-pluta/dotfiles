@@ -1,0 +1,53 @@
+#:schema https://jj-vcs.github.io/jj/latest/config-schema.json
+#:tombi schema.strict = false
+
+[user]
+name = "Michal Pluta"
+email = "michalpl2003@gmail.com"
+
+# [signing]
+# backend = "ssh"
+# key = "~/.ssh/github.pub"
+
+# [git]
+# sign-on-push = true
+# subprocess = true
+
+[ui]
+default-command = "log"
+diff-editor = ":builtin"
+
+[aliases]
+# `jj l` shows commits on the working-copy commit's (anonymous) bookmark compared to the `main` bookmark
+jj = []
+fw = ["edit", "@+"]
+bk = ["edit", "@-"]
+init = ["git", "init"]
+clone = ["git", "clone"]
+remote = ["git", "remote"]
+n = ["new"]
+c = ["commit"]
+d = ["describe"]
+push = ["git", "push"]
+l = ["log", "-r", "(main..@):: | (main..@)-"]
+flog = ["log", "-r", "::"]
+stat = ["show", "--stat"]
+tug = ["bookmark", "move", "--from", "closest_bookmark(@-)", "--to", "@-"]
+sync = ['git', 'fetch', '--all-remotes']
+pick-up = ["util", "exec", "--", "sh", "-c", "$EDITOR $(jj diff --name-only -r ${1:-@})", "--"]
+
+
+# Source: https://github.com/jj-vcs/jj/discussions/5812
+log_node = '''
+[templates]
+if(self && !current_working_copy && !immutable && !conflict && in_branch(self),
+  "◇",
+  builtin_log_node
+)
+'''
+
+[template-aliases]
+"in_branch(commit)" = 'commit.contained_in("immutable_heads()..bookmarks()")'
+
+[revset-aliases]
+'closest_bookmark(to)' = 'heads(::to & bookmarks())'

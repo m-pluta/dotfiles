@@ -1,0 +1,324 @@
+[language-server]
+pylsp = { command = "pylsp" }
+ruff = { command = "ruff", args = ["server"] }
+tinymist = { command = "tinymist" }
+tombi = { command = "tombi", args = ["lsp"] }
+ty = { command = "ty", args = ["server"] }
+vtsls = { command = "vtsls", args = ["--stdio"] }
+vscode-css-language-server = { command = "vscode-css-language-server", args = ["--stdio"], config = { provideFormatter = true, css = { validate = { enable = true } } } }
+vscode-html-language-server = { command = "vscode-html-language-server", args = ["--stdio"], config = { provideFormatter = true } }
+vscode-json-language-server = { command = "vscode-json-language-server", args = ["--stdio"], config = { provideFormatter = true, json = { validate = { enable = true } } } }
+
+
+[language-server.typos]
+# typos-lsp must be on your PATH, or otherwise change this to an absolute path to typos-lsp
+command = "typos-lsp"
+# Logging level of the language server. Defaults to error.
+# Run with helix -v to output LSP logs to the editor log (:log-open)
+environment = { "RUST_LOG" = "error" }
+# Custom config. Used together with a config file found in the workspace or its parents,
+# taking precedence for settings declared in both. Equivalent to the typos `--config` cli argument.
+config.config = "~/code/typos-lsp/crates/typos-lsp/tests/typos.toml"
+# How typos are rendered in the editor, can be one of an Error, Warning, Info or Hint.
+# Defaults to Info.
+config.diagnosticSeverity = "Info"
+
+[language-server.rust-analyzer]
+command = "rust-analyzer"
+
+[language-server.rust-analyzer.config]
+inlayHints.bindingModeHints.enable = false
+inlayHints.closingBraceHints.minLines = 10
+inlayHints.closureReturnTypeHints.enable = "with_block"
+inlayHints.discriminantHints.enable = "fieldless"
+inlayHints.lifetimeElisionHints.enable = "skip_trivial"
+inlayHints.typeHints.hideClosureInitialization = false
+
+[language-server.rust-analyzer.config.files]
+watcher = "server"
+
+[language-server.harper-ls]
+command = "harper-ls"
+args = ["--stdio"]
+
+[language-server.harper-ls.config.harper-ls]
+dialect = "British"
+
+[[language]]
+name = "python"
+auto-format = true
+language-servers = ["ruff", "harper-ls", "pylsp"]
+
+[[language]]
+name = "jsx"
+scope = "source.jsx"
+injection-regex = "jsx"
+language-id = "javascriptreact"
+file-types = ["jsx"]
+roots = ["package.json", "jsconfig.json"]
+comment-token = "//"
+block-comment-tokens = { start = "/*", end = "*/" }
+language-servers = ["typescript-language-server"]
+indent = { tab-width = 2, unit = "  " }
+grammar = "javascript"
+
+[[language]]
+name = "typespec"
+scope = "source.typespec"
+injection-regex = "(tsp|typespec)"
+language-id = "typespec"
+file-types = ["tsp"]
+roots = ["tspconfig.yaml"]
+auto-format = true
+comment-token = "//"
+block-comment-tokens = { start = "/*", end = "*/" }
+language-servers = ["typespec"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "tsx"
+scope = "source.tsx"
+injection-regex = "(tsx)"  # |typescript
+language-id = "typescriptreact"
+file-types = ["tsx"]
+roots = ["package.json", "tsconfig.json"]
+comment-token = "//"
+block-comment-tokens = { start = "/*", end = "*/" }
+language-servers = ["typescript-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "css"
+scope = "source.css"
+injection-regex = "css"
+file-types = ["css"]
+block-comment-tokens = { start = "/*", end = "*/" }
+language-servers = ["vscode-css-language-server"]
+auto-format = true
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "scss"
+scope = "source.scss"
+injection-regex = "scss"
+file-types = ["scss"]
+block-comment-tokens = { start = "/*", end = "*/" }
+language-servers = ["vscode-css-language-server"]
+auto-format = true
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "less"
+scope = "source.less"
+injection-regex = "less"
+file-types = ["less"]
+block-comment-tokens = { start = "/*", end = "*/" }
+language-servers = ["vscode-css-language-server"]
+auto-format = true
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "html"
+scope = "text.html.basic"
+injection-regex = "html"
+file-types = [
+  "html",
+  "htm",
+  "shtml",
+  "xhtml",
+  "xht",
+  "jsp",
+  "asp",
+  "aspx",
+  "jshtm",
+  "volt",
+  "rhtml",
+  "cshtml"
+]
+block-comment-tokens = { start = "<!--", end = "-->" }
+language-servers = ["vscode-html-language-server", "superhtml"]
+auto-format = true
+indent = { tab-width = 2, unit = "  " }
+
+[language.auto-pairs]
+'(' = ")"
+'{' = "}"
+'[' = "]"
+'"' = '"'
+"'" = "'"
+"<" = ">"
+
+[[language]]
+name = "typst"
+auto-format = true
+soft-wrap = { enable = true }
+# language-servers = ["tinymist", "harper-ls", "typos"]
+language-servers = ["tinymist"]
+formatter = { command = "typstyle", args = ["-l", "120", "-t", "2"] }
+
+[language.auto-pairs]
+'(' = ")"
+'{' = "}"
+'[' = "]"
+'<' = ">"
+'*' = "*"
+'$' = "$"
+'"' = '"'
+'`' = "`"
+
+[[language]]
+name = "typescript"
+scope = "source.ts"
+injection-regex = "(ts|typescript)"
+language-id = "typescript"
+file-types = ["ts", "mts", "cts"]
+shebangs = ["deno", "bun", "ts-node"]
+roots = ["package.json", "tsconfig.json"]
+comment-token = "//"
+block-comment-tokens = { start = "/*", end = "*/" }
+language-servers = ["typescript-language-server"]
+indent = { tab-width = 2, unit = "  " }
+
+[[language]]
+name = "css"
+auto-format = true
+file-types = ["tcss"]
+language-servers = ["vscode-css-language-server", "harper-ls"]
+
+[[language]]
+name = "toml"
+auto-format = true
+language-servers = ["tombi", "harper-ls"]
+
+[[language]]
+name = "cpp"
+language-servers = ["clangd", "harper-ls"]
+auto-format = true
+
+[[language]]
+name = "c"
+language-servers = ["clangd", "harper-ls"]
+auto-format = true
+
+[[language]]
+name = "rust"
+scope = "source.rust"
+injection-regex = "rs|rust"
+file-types = ["rs"]
+roots = ["Cargo.toml", "Cargo.lock"]
+shebangs = ["rust-script", "cargo"]
+auto-format = true
+comment-tokens = ["//", "///", "//!"]
+block-comment-tokens = [
+  { start = "/*", end = "*/" },
+  { start = "/**", end = "*/" },
+  { start = "/*!", end = "*/" },
+]
+language-servers = ["rust-analyzer", "harper-ls"]
+formatter = { command = "rustfmt" }
+indent = { tab-width = 4, unit = "    " }
+persistent-diagnostic-sources = ["rustc", "clippy"]
+
+[[language]]
+name = "markdown"
+scope = "source.md"
+injection-regex = "md|markdown"
+file-types = [
+  "md",
+  "livemd",
+  "markdown",
+  "mdx",
+  "mkd",
+  "mkdn",
+  "mdwn",
+  "mdown",
+  "markdn",
+  "mdtxt",
+  "mdtext",
+  "workbook",
+  { glob = "PULLREQ_EDITMSG" }
+]
+language-servers = ["markdown-oxide", "harper-ls"]
+indent = { tab-width = 2, unit = "  " }
+block-comment-tokens = { start = "<!--", end = "-->" }
+soft-wrap = { enable = true }
+
+[language.auto-pairs]
+'(' = ")"
+'{' = "}"
+'[' = "]"
+'"' = '"'
+"'" = "'"
+'`' = "`"
+'‘' = "’"
+'«' = "»"
+'“' = "”"
+
+[[language]]
+name = "javascript"
+scope = "source.js"
+injection-regex = "(js|javascript)"
+language-id = "javascript"
+file-types = [
+  "js",
+  "mjs",
+  "cjs",
+  "rules",
+  "es6",
+  "pac",
+  "gs",
+  { glob = ".node_repl_history" },
+  { glob = "jakefile" }
+]
+shebangs = ["node"]
+roots = ["package.json", "jsconfig.json"]
+comment-token = "//"
+auto-format = true
+block-comment-tokens = { start = "/*", end = "*/" }
+language-servers = ["vtsls"]
+indent = { tab-width = 2, unit = "  " }
+
+[language.debugger]
+name = "js-debug-dap"
+transport = "tcp"
+port-arg = "{} 127.0.0.1"
+# args consisting of cmd (node) and path to adapter should be added to user's configuration
+quirks = { absolute-paths = true }
+
+[[language.debugger.templates]]
+name = "source"
+request = "launch"
+completion = [{ name = "main", completion = "filename", default = "index.js" }]
+args = { program = "{0}", skipFiles = ["<node_internals>/**"] }
+
+[[grammar]]
+name = "javascript"
+source = { git = "https://github.com/tree-sitter/tree-sitter-javascript", rev = "3a837b6f3658ca3618f2022f8707e29739c91364" }
+
+[[grammar]]
+name = "typescript"
+source = { git = "https://github.com/tree-sitter/tree-sitter-typescript", rev = "75b3874edb2dc714fb1fd77a32013d0f8699989f", subpath = "typescript" }
+
+[[grammar]]
+name = "typespec"
+source = { git = "https://github.com/happenslol/tree-sitter-typespec", rev = "0ee05546d73d8eb64635ed8125de6f35c77759fe" }
+
+[[grammar]]
+name = "tsx"
+source = { git = "https://github.com/tree-sitter/tree-sitter-typescript", rev = "75b3874edb2dc714fb1fd77a32013d0f8699989f", subpath = "tsx" }
+
+[[grammar]]
+name = "css"
+source = { git = "https://github.com/tree-sitter/tree-sitter-css", rev = "6e327db434fec0ee90f006697782e43ec855adf5" }
+
+[[grammar]]
+name = "scss"
+source = { git = "https://github.com/serenadeai/tree-sitter-scss", rev = "c478c6868648eff49eb04a4df90d703dc45b312a" }
+
+[[grammar]]
+name = "less"
+source = { git = "https://github.com/jimliang/tree-sitter-less", rev = "e5ae6245f841b5778c79ac93b28fa4f56b679c5d" }
+
+[[grammar]]
+name = "html"
+source = { git = "https://github.com/tree-sitter/tree-sitter-html", rev = "cbb91a0ff3621245e890d1c50cc811bffb77a26b" }

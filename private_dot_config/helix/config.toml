@@ -1,0 +1,67 @@
+theme = "akari-night"
+
+[editor]
+auto-format = true
+auto-pairs = true
+auto-save = false
+color-modes = true
+completion-trigger-len = 1
+continue-comments = false
+line-number = "relative"
+rulers = [88, 120]
+scroll-lines = 1
+scrolloff = 5
+true-color = true
+
+[editor.notifications]
+enable = false
+
+[editor.auto-reload]
+focus-gained = true
+
+[editor.bufferline]
+render-mode = "multiple"
+separator = ""
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.file-picker]
+hidden = false
+
+[editor.indent-guides]
+render = true
+character = "▏"
+
+[editor.lsp]
+display-messages = true
+display-inlay-hints = true
+display-color-swatches = true
+color-swatches-string = "⬣"
+signature-help-position = "above"
+
+# [editor.cmdline]
+# style = "popup"
+# show-icons = false
+# min-popup-width = 60
+# max-popup-width = 100
+# use-full-height = true
+
+[keys.normal]
+"C-o" = ":config-open"
+"C-q" = ":buffer-close"
+"C-r" = [":config-reload", ":lsp-restart"]
+"C-l" = [":open ~/.config/helix/languages.toml"]
+"esc" = ["keep_primary_selection", "collapse_selection"]
+
+[keys.normal.space]
+w = ":write"
+q = ":quit"
+x = ":write-quit"
+space = ":reload-all"
+i = ":toggle-option lsp.display-inlay-hints"
+
+[keys.select]
+"esc" = ["collapse_selection", "keep_primary_selection", "normal_mode"]
