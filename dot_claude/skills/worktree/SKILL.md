@@ -23,7 +23,7 @@ Ask in plain chat what they want done (skip if already stated clearly). Keep it 
 find ~/dev -maxdepth 3 -type d -name .git 2>/dev/null | sed 's|/\.git$||' | grep -v '/\.worktrees/'
 ```
 
-(Exclude `.worktrees` — a worktree is itself a `.git` checkout and would show up as a fake repo.) Default to the current repo if cwd is inside one of these; otherwise list up to 4, current/most-recent first.
+(Exclude `.worktrees` — a worktree is itself a `.git` checkout and would show up as a fake repo.) Default to the current repo if cwd is inside one of these. Otherwise, pick options based on actual relevance to the task prompt (name/path match, or the repo it's obviously about) — not just recency padded out to 4 slots. If one repo is the clear match, it's fine to only offer 2-3 options rather than force in unrelated ones.
 
 Generate 2-3 kebab-case suggestions each for name and branch from the task prompt (independent fields, can share a top suggestion). Ask one `AskUserQuestion` with three questions: Repo / Worktree name / Branch name (options as above; "Other" is automatic).
 
