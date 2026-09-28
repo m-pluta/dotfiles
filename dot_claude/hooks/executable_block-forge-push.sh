@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# PreToolUse hook (Bash): ask before any git/jj push to a remote.
+# PreToolUse hook (Bash): ask before any git/jj push to a remote (GitHub,
+# Forgejo, etc.). Email submission is handled by ask-send-email.sh.
 set -euo pipefail
 
 input="$(cat)"
@@ -10,8 +11,8 @@ command="$(printf '%s' "$input" | jq -r '.tool_input.command // empty')"
 # message containing the word "push") can't trigger a false match.
 scan="$(printf '%s' "$command" | sed -E "s/'[^']*'//g; s/\"[^\"]*\"//g")"
 
-# Strip git send-email invocations before matching, so send-email (which
-# mails patches rather than pushing to a remote) never trips this hook.
+# Strip git send-email invocations before matching, so their arguments
+# (e.g. a patch file named push.patch) never trip this hook.
 scan="$(printf '%s' "$scan" | sed -E 's/\bgit([^;&|]*)\bsend-email\b[^;&|]*//g')"
 
 matched=0

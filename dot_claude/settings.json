@@ -35,7 +35,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/block-vcs-push.sh"
+            "command": "~/.claude/hooks/block-forge-push.sh"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/ask-send-email.sh"
           },
           {
             "type": "command",
