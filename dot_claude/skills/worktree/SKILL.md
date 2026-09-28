@@ -45,6 +45,8 @@ git -C <repo> worktree add -b <branch> <repo>/.worktrees/<name> <base-ref>
 
 (Drop `-b <branch>` and pass `<branch>` as the commit-ish if reusing an existing branch.)
 
+If the new worktree has an `.envrc`, run `direnv allow` in it before opening any panes — otherwise the terminal pane just sits there blocked on direnv's "blocked" prompt.
+
 ## 5. Build the opening prompt
 
 Append this fixed suffix to the step-1 prompt, verbatim, every time:
@@ -52,7 +54,7 @@ Append this fixed suffix to the step-1 prompt, verbatim, every time:
 ```
 <task prompt>
 
-Before doing any work, explain in plain terms your understanding of the problem and what you plan to do to fix it. Do not start implementing until you've given that explanation.
+Explore the codebase first to understand the problem — reading around is fine and expected, don't guess. Once you have, give a TLDR (a couple of short sentences, no more) of your understanding of the problem and how you'll fix it. Do not start implementing until you've given that TLDR.
 ```
 
 ## 6. Open the zellij tab
@@ -85,10 +87,10 @@ Both panes same `cwd` (the worktree path). The `compact-bar` pane is required �
 
 KDL-escape the prompt for `args`, in order: `\` → `\\`, `"` → `\"`, newline → literal `\n`.
 
-Write to `/tmp/claude/$CLAUDE_CODE_SESSION_ID/<worktree-name>-layout.kdl`, then:
+Write to `/tmp/claude/<session-id>/<worktree-name>-layout.kdl` — use the actual session ID value in the path, not the literal `$CLAUDE_CODE_SESSION_ID` string (the scratch-file safety hook checks the command text, not the expanded value, and rejects the unexpanded form). Then:
 
 ```bash
-zellij action new-tab --layout /tmp/claude/$CLAUDE_CODE_SESSION_ID/<worktree-name>-layout.kdl
+zellij action new-tab --layout /tmp/claude/<session-id>/<worktree-name>-layout.kdl
 ```
 
 ## 7. Report back
