@@ -373,6 +373,21 @@ _gcd_move() {
 }
 export -f _gcd_move
 
+# _gcd_info CUR SCAN: fzf counter as worktree position/matches/total, ignoring header rows
+_gcd_info() {
+    local pos="${FZF_POS:-0}" cur=0 shown=0 total i l
+    local -a rows
+    mapfile -t rows < "$1"
+    for ((i = 0; i < ${#rows[@]}; i++)); do
+        [[ "${rows[i]}" == *$'\t'?* ]] || continue
+        ((shown++))
+        ((i + 1 <= pos)) && cur=$shown
+    done
+    total=$(wc -l < "$2")
+    if ((shown == total)); then echo "  $cur/$shown"; else echo "  $cur/$shown ($total)"; fi
+}
+export -f _gcd_info
+
 gcd() {
     local root="${GCD_ROOT:-$HOME/dev}" tmp sel path
     tmp=$(mktemp -d)
@@ -384,6 +399,7 @@ gcd() {
     # worktree row via transform, and filtering reloads the tree so parent headers stay.
     sel=$(SHELL=$(command -v bash) fzf --ansi --disabled --delimiter=$'\t' --with-nth=1 \
         --height=70% --reverse --prompt='worktree> ' \
+        --info-command="_gcd_info $tmp/cur $tmp/scan" \
         --bind "start:transform:_gcd_move $tmp/cur down 0" \
         --bind "change:reload:_gcd_render $tmp/scan {q} | tee $tmp/cur" \
         --bind "load:transform:_gcd_move $tmp/cur down 0" \
