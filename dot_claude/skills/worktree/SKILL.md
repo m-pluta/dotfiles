@@ -57,6 +57,8 @@ Append this fixed suffix to the step-1 prompt, verbatim, every time:
 Explore the codebase first to understand the problem — reading around is fine and expected, don't guess. Once you have, give a TLDR (a couple of short sentences, no more) of your understanding of the problem and how you'll fix it. Do not start implementing until you've given that TLDR.
 
 After the TLDR, go ahead and implement the fix, then build and validate it using the repo's own tooling. The goal is for the work to be finished by the time the user comes back to this tab. For any extra files you create that the repo doesn't already manage (scratch output, temp files) — anything the repo's own gitignore or build system doesn't already handle — keep them under $TMPDIR instead of inside the repo.
+
+Once validated, commit as you go (each independent change its own commit, using the `commit-style` skill) rather than one big commit at the end. When everything's committed, offer to open a PR using the `pr` skill — offer it, don't create one unprompted.
 ```
 
 ## 6. Open the zellij tab
