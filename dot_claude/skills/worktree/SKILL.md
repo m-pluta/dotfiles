@@ -37,7 +37,7 @@ If it exists, ask whether to reuse it (drop `-b` below) or rename. Base ref — 
 
 ## 4. Create the worktree
 
-Ensure `<repo>/.gitignore` has a `.worktrees/` line (add if missing), then:
+`.worktrees/` is ignored globally (`~/.config/git/ignore`), so no per-repo `.gitignore` edit is needed.
 
 ```bash
 git -C <repo> worktree add -b <branch> <repo>/.worktrees/<name> <base-ref>
