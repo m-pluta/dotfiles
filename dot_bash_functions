@@ -274,3 +274,126 @@ prune-claude() {
     esac
 }
 
+
+# gcd: fuzzy-pick a worktree across all git repos under ~/dev, shown as a tree
+_gcd_preview() {
+    local p="$1" base b ahead
+    [ -z "$p" ] && return
+    local g=(git -C "$p")
+    # base = branch checked out in the repo's main worktree, else main/master
+    base=$(git -C "$("${g[@]}" worktree list --porcelain | sed -n '1s/^worktree //p')" symbolic-ref -q --short HEAD)
+    if [ -z "$base" ]; then
+        for b in main master; do
+            "${g[@]}" rev-parse -q --verify "$b" >/dev/null && { base=$b; break; }
+        done
+    fi
+    [ -z "$base" ] && base=$("${g[@]}" symbolic-ref -q --short refs/remotes/origin/HEAD)
+    local up ab
+    up=$("${g[@]}" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)
+    if [ -n "$up" ]; then
+        ab=$("${g[@]}" rev-list --left-right --count "$up"...HEAD)
+        printf '\e[32m↑%s\e[0m \e[31m↓%s\e[0m \e[2m%s\e[0m\n' "${ab#*$'\t'}" "${ab%$'\t'*}" "$up"
+    else
+        printf '\e[2mno upstream\e[0m\n'
+    fi
+    if [ -n "$base" ] && [ "$("${g[@]}" rev-parse HEAD)" != "$("${g[@]}" rev-parse "$base")" ]; then
+        ahead=$("${g[@]}" rev-list --count "$base"..HEAD)
+        if [ "$ahead" -gt 0 ]; then
+            printf '\n\e[1;32m== %s commits on top of %s ==\e[0m\n' "$ahead" "$base"
+            "${g[@]}" log --color=always --format='%C(green)%h%C(reset) %s' "$base"..HEAD
+        fi
+    fi
+    if [ -n "$base" ]; then
+        printf '\n\e[1;33m== %s ==\e[0m\n' "$base"
+        "${g[@]}" log -n 8 --color=always --format='%C(yellow)%h%C(reset) %C(dim)%s%C(reset)' "$base"
+    else
+        printf '\n'; "${g[@]}" log -n 8 --oneline --color=always
+    fi
+}
+export -f _gcd_preview
+
+# scan: one "relrepo<TAB>branch<TAB>path" line per worktree, for repos with linked worktrees
+_gcd_scan() {
+    local root="$1" repo path branch head line ents n
+    while IFS= read -r repo; do
+        ents="" n=0 path="" branch=""
+        while IFS= read -r line; do
+            case "$line" in
+                "worktree "*) path="${line#worktree }"; branch="" ;;
+                "branch "*) branch="${line#branch refs/heads/}" ;;
+                "HEAD "*) head="${line#HEAD }" ;;
+                detached) branch="(detached ${head:0:7})"; ((n == 0)) && branch="(main checkout)" ;;
+                "") if [ -n "$path" ] && [[ "$path" != /tmp/* ]]; then
+                        ents+="${repo#"$root"/}"$'\t'"${branch:-?}"$'\t'"$path"$'\n'; ((n++))
+                    fi
+                    path="" ;;
+            esac
+        done < <(git -C "$repo" worktree list --porcelain 2>/dev/null; echo)
+        ((n > 1)) && printf '%s' "$ents"
+    done < <(find "$root" -maxdepth 4 -name .git -type d -not -path '*/.worktrees/*' -printf '%h\n' | sort)
+}
+
+# render: nested tree from a scan file, keeping only worktrees matching every query word
+# (matched against "repo branch"), with their parent headers always kept
+_gcd_render() {
+    local file="$1" q="$2" hdr=$'\e[1;38;2;255;40;40m' dirc=$'\e[2;37m' rst=$'\e[0m'
+    local rel branch path d w hay ok c
+    local -a parts prev=() words
+    read -ra words <<< "$q"
+    while IFS=$'\t' read -r rel branch path; do
+        hay="${rel,,} ${branch,,}" ok=1
+        for w in "${words[@]}"; do [[ "$hay" == *"${w,,}"* ]] || { ok=0; break; }; done
+        ((ok)) || continue
+        IFS=/ read -ra parts <<< "$rel"
+        for ((d = 0; d < ${#parts[@]}; d++)); do
+            [ "${prev[d]}" = "${parts[d]}" ] && [ "${prev[*]:0:d}" = "${parts[*]:0:d}" ] && continue
+            c=$dirc; ((d == ${#parts[@]} - 1)) && c=$hdr
+            printf '%*s%s%s%s\t\n' $((d * 2)) '' "$c" "${parts[d]}" "$rst"
+        done
+        prev=("${parts[@]}")
+        printf '%*s%s\t%s\n' $((${#parts[@]} * 2)) '' "$branch" "$path"
+    done < "$file"
+}
+export -f _gcd_render
+
+# _gcd_move FILE up|down POS: print an fzf pos() action for the next selectable row
+# (rows with an empty path field are headers), wrapping at the ends
+_gcd_move() {
+    local file="$1" dir="$2" pos="$3" n i step l
+    local -a rows
+    mapfile -t rows < "$file"
+    n=${#rows[@]}
+    ((n)) || return
+    step=1; [ "$dir" = up ] && step=-1
+    for ((i = 1; i <= n; i++)); do
+        l=$(( (pos - 1 + step * i) % n ))
+        ((l < 0)) && l=$((l + n))
+        [[ "${rows[l]}" == *$'\t'?* ]] && { echo "pos($((l + 1)))"; return; }
+    done
+}
+export -f _gcd_move
+
+gcd() {
+    local root="${GCD_ROOT:-$HOME/dev}" tmp sel path
+    tmp=$(mktemp -d)
+    _gcd_scan "$root" > "$tmp/scan"
+    [ -s "$tmp/scan" ] || { echo "gcd: no repos with worktrees under $root" >&2; rm -rf "$tmp"; return 1; }
+    _gcd_render "$tmp/scan" "" > "$tmp/cur"
+
+    # Headers are rows with an empty path field. Up/down jump straight to the next
+    # worktree row via transform, and filtering reloads the tree so parent headers stay.
+    sel=$(SHELL=$(command -v bash) fzf --ansi --disabled --delimiter=$'\t' --with-nth=1 \
+        --height=70% --reverse --prompt='worktree> ' \
+        --bind "start:transform:_gcd_move $tmp/cur down 0" \
+        --bind "change:reload:_gcd_render $tmp/scan {q} | tee $tmp/cur" \
+        --bind "load:transform:_gcd_move $tmp/cur down 0" \
+        --bind "down:transform:_gcd_move $tmp/cur down \$FZF_POS" \
+        --bind "up:transform:_gcd_move $tmp/cur up \$FZF_POS" \
+        --bind "ctrl-n:transform:_gcd_move $tmp/cur down \$FZF_POS" \
+        --bind "ctrl-p:transform:_gcd_move $tmp/cur up \$FZF_POS" \
+        --bind "enter:transform:[ -n {2} ] && echo accept" \
+        --preview='_gcd_preview {2}' --preview-window=right:55% < "$tmp/cur") || { rm -rf "$tmp"; return; }
+    path="${sel#*$'\t'}"
+    rm -rf "$tmp"
+    cd "$path"
+}
