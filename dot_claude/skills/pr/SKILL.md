@@ -13,7 +13,7 @@ Fixed order, every activation.
 git remote -v
 ```
 
-- A remote pointing at `mpluta.dev` → use `fj`, targeting that remote with `-R <remote-name>`.
+- A remote pointing at `mpluta.dev` → use `fj` (it resolves the remote/host from the repo itself; use `-H <host>` or `-r <owner/repo>` only if it's ambiguous — `fj pr create` has no `-R`/`--remote` flag, despite `fj pr`'s shared help listing one at the parent-command level).
 - Else a remote pointing at `github.com` → use `gh` (auto-detects from `origin`; pass `--repo owner/repo` if there's more than one GitHub remote and it's ambiguous which one).
 - Else: ask the user which remote/tool to use via `AskUserQuestion` — don't guess.
 
@@ -37,10 +37,12 @@ Nothing else goes in the body — no "Testing" section, no checklists, no genera
 Print the title and body in chat before running anything — better to catch a mistake by reading plain content than by reading a raw shell command in a permission prompt. (The `ask-public-forge-action` hook will also gate the actual command as a second check.)
 
 ```bash
-fj pr create --title "<title>" --body "<body>" --base <base> -R <remote>
+fj pr create "<title>" --body "<body>" --base <base> --head <head-branch>
 # or
 gh pr create --title "<title>" --body "<body>" --base <base>
 ```
+
+`fj pr create`'s title is a **positional** argument, not `--title` — that flag doesn't exist on `create` (verified against `fj pr create --help`, not assumed).
 
 ## 6. Report back
 
