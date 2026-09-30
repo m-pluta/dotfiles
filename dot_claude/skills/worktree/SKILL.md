@@ -91,10 +91,10 @@ Both panes same `cwd` (the worktree path). The `compact-bar` pane is required �
 
 KDL-escape the prompt for `args`, in order: `\` → `\\`, `"` → `\"`, newline → literal `\n`.
 
-Write to `/tmp/claude/<session-id>/<worktree-name>-layout.kdl` — use the actual session ID value in the path, not the literal `$CLAUDE_CODE_SESSION_ID` string (the scratch-file safety hook checks the command text, not the expanded value, and rejects the unexpanded form). Then:
+Write to `<scratchpad>/<worktree-name>-layout.kdl`, where `<scratchpad>` is this session's scratchpad directory from the system prompt. Then:
 
 ```bash
-zellij action new-tab --layout /tmp/claude/<session-id>/<worktree-name>-layout.kdl
+zellij action new-tab --layout <scratchpad>/<worktree-name>-layout.kdl
 ```
 
 ## 7. Report back

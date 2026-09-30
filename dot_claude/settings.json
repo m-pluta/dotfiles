@@ -23,10 +23,6 @@
           {
             "type": "command",
             "command": "python3 ~/.claude/hooks/check-multiline-comment.py"
-          },
-          {
-            "type": "command",
-            "command": "python3 ~/.claude/hooks/block-stray-tmp-write.py"
           }
         ]
       },
@@ -44,10 +40,6 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/ask-public-forge-action.sh"
-          },
-          {
-            "type": "command",
-            "command": "python3 ~/.claude/hooks/block-stray-tmp-write.py"
           }
         ]
       }

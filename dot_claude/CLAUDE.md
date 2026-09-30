@@ -1,7 +1,3 @@
-## Scratch/temp files
-
-Use `/tmp/claude/$CLAUDE_CODE_SESSION_ID/` for scratch files, not a bare `/tmp` or `~/tmp` path — a hook denies those.
-
 ## Commit messages
 
 Always use the `commit-style` skill when writing any git commit message, in any repo.
