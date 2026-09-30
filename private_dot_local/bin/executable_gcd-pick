@@ -140,10 +140,10 @@ info() {
     if ((shown == total)); then echo "$cur/$shown"; else echo "$cur/$shown ($total)"; fi
 }
 
-# preview PATH: ahead/behind, commits on top of the base, then the base's recent commits.
+# preview PATH: ahead/behind, then the branch's own commits on top of the base's history.
 # Base is the branch checked out in the repo's main worktree, else local main/master.
 preview() {
-    local p="$1" base b ahead up ab
+    local p="$1" base b up ab mb
     [ -z "$p" ] && return
     local g=(git -C "$p")
     base=$(git -C "$("${g[@]}" worktree list --porcelain | sed -n '1s/^worktree //p')" symbolic-ref -q --short HEAD)
@@ -159,16 +159,15 @@ preview() {
     else
         printf '\e[2mno upstream\e[0m\n'
     fi
-    ahead=$([ -n "$base" ] && "${g[@]}" rev-list --count "$base"..HEAD)
-    if [ "${ahead:-0}" -gt 0 ]; then
-        printf '\n\e[1;32m== %s commits on top of %s ==\e[0m\n' "$ahead" "$base"
-        "${g[@]}" log --color=always --format='%C(green)%h%C(reset) %s' "$base"..HEAD
-    fi
-    if [ -n "$base" ]; then
-        printf '\n\e[1;33m== %s ==\e[0m\n' "$base"
-        "${g[@]}" log -n 8 --color=always --format='%C(yellow)%h%C(reset) %C(dim)%s%C(reset)' "$base"
+    printf '\n'
+    # one continuous list: this branch's own commits in green, then the base's commits from the
+    # fork point down in yellow. Long enough to fill the pane and be scrolled.
+    mb=$([ -n "$base" ] && "${g[@]}" merge-base "$base" HEAD 2>/dev/null)
+    if [ -n "$mb" ]; then
+        "${g[@]}" log --color=always --format='%C(green)%h%C(reset) %s' "$mb"..HEAD
+        "${g[@]}" log -n 500 --color=always --format='%C(yellow)%h%C(reset) %C(dim)%s%C(reset)' "$mb"
     else
-        printf '\n'; "${g[@]}" log -n 8 --oneline --color=always
+        "${g[@]}" log -n 500 --color=always --format='%C(yellow)%h%C(reset) %C(dim)%s%C(reset)'
     fi
 }
 
@@ -204,7 +203,8 @@ pick() {
     if [ "$mode" = repo ]; then
         prev=(--listen=0 --header="$(heading "$tmp/scan")" --bind "start:execute-silent($self fill $tmp \$FZF_PORT >/dev/null 2>&1 &)")
     else
-        prev=(--preview="$self preview {2}" --preview-window=right:55%)
+        prev=(--preview="$self preview {2}" --preview-window=right:55%
+            --bind "shift-up:preview-up,shift-down:preview-down,page-up:preview-page-up,page-down:preview-page-down")
     fi
 
     # Up/down jump straight to the next worktree row via transform, and filtering
