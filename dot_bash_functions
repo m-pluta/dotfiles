@@ -280,3 +280,19 @@ gcd() {
     local d
     d=$(gcd-pick "$@") && [ -n "$d" ] && cd "$d"
 }
+
+# gcw: pick a repo (gcd-pick repo), then browse its worktrees with `wt switch`.
+# Esc in wt goes back to the repo picker, Esc there exits. Choosing a worktree cds to it.
+gcw() {
+    local repo out
+    out=$(mktemp)
+    while repo=$(gcd-pick repo); do
+        : > "$out"
+        wt -C "$repo" switch --no-cd -x sh -- -c "pwd > '$out'"
+        if [ -s "$out" ]; then
+            cd "$(cat "$out")"
+            break
+        fi
+    done
+    rm -f "$out"
+}

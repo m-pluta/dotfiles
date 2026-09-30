@@ -7,13 +7,38 @@
 # subcommands: scan, render, move, info, preview. No subcommand runs the picker.
 
 root="${GCD_ROOT:-$HOME/dev}"
+# GCD_MODE=repo (set by the `repo` subcommand): repo rows are the selectable ones,
+# worktrees are shown but not selectable, and every repo is listed.
+mode="${GCD_MODE:-worktree}"
 hdr=$'\e[1;38;2;255;40;40m'   # repo names
 dirc=$'\e[2;37m'              # parent folders that are not repos
 rst=$'\e[0m'
 
+# jq program for repo mode: "path<TAB>columns" per worktree from `wt list --format=json`.
+# Columns: status symbols, upstream ahead/behind, uncommitted diff, age, subject. Widths are
+# fixed so they line up down the whole list, and colour is added after padding.
+jq_cols='
+def sp(n): if n > 0 then " " * n else "" end;
+def col(code; txt; w): "\u001b[\(code)m\(txt)\u001b[0m" + sp(w - (txt | length));
+def age: if (.head.committed_at // null) == null then "" else
+      (now - (.head.committed_at | fromdateiso8601)) as $s
+    | if $s < 3600 then "\($s / 60 | floor)m" elif $s < 86400 then "\($s / 3600 | floor)h"
+      elif $s < 2592000 then "\($s / 86400 | floor)d" else "\($s / 2592000 | floor)mo" end end;
+.items[] | select(.worktree != null) | (.upstream // {}) as $u | .worktree.changes.diff as $d
+| [ .worktree.path,
+    ( col("33"; .display.symbols // ""; 6) + "  "
+    + col("32"; (if ($u.ahead // 0) > 0 then "⇡\($u.ahead)" else "" end); 4)
+    + col("31"; (if ($u.behind // 0) > 0 then "⇣\($u.behind)" else "" end); 5) + "  "
+    + col("32"; (if $d.added > 0 then "+\($d.added)" else "" end); 6)
+    + col("31"; (if $d.deleted > 0 then "-\($d.deleted)" else "" end); 6) + "  "
+    + col("2"; age; 4) + "  "
+    + col("2"; .head.subject; 0)) ] | @tsv'
+
 # scan ROOT: one "relrepo<TAB>branch<TAB>path" line per worktree, for repos with linked worktrees
+# (every repo in repo mode)
 scan() {
-    local root="$1" repo path branch head line ents n
+    local root="$1" repo path branch head line ents n min=1
+    [ "$mode" = repo ] && min=0
     while IFS= read -r repo; do
         ents="" n=0 path="" branch=""
         while IFS= read -r line; do
@@ -28,34 +53,62 @@ scan() {
                     path="" ;;
             esac
         done < <(git -C "$repo" worktree list --porcelain 2>/dev/null; echo)
-        ((n > 1)) && printf '%s' "$ents"
+        ((n > min)) && printf '%s' "$ents"
     done < <(find "$root" -maxdepth 4 -name .git -type d -not -path '*/.worktrees/*' -printf '%h\n' | sort)
 }
 
-# render SCANFILE QUERY: nested tree, keeping only worktrees matching every query word
-# (matched against "repo branch") with their parent headers always kept.
-# Header rows have an empty path field, which is how move and info tell them apart.
+# render SCANFILE QUERY: one header row per repo ("dir/" in grey, repo name in red) with its
+# worktrees indented below, keeping only worktrees matching every query word (matched against
+# "repo branch") with their repo header always kept.
+# Rows whose path field is empty are not selectable, which is how move and info tell them apart.
 render() {
     local file="$1" q="$2"
-    local rel branch path d w hay ok c pre
-    local -A seen
-    local -a parts words
+    local rel branch path info w hay ok rp bw p s dir name
+    local -A seen inf rpath cnt
+    local -a words
     read -ra words <<< "$q"
+    # wt's columns arrive later from `fill`, so rows have none until info.tsv exists
+    [ -f "${file%/*}/info.tsv" ] && while IFS=$'\t' read -r p s; do inf[$p]=$s; done < "${file%/*}/info.tsv"
+    bw=$(branch_width "$file")
+    # a repo's path is its first scan row (the main worktree), even when filtering hides that row
+    while IFS=$'\t' read -r rel _ path; do
+        [[ -v rpath[$rel] ]] || rpath[$rel]=$path
+        cnt[$rel]=$((cnt[$rel] + 1))
+    done < "$file"
     while IFS=$'\t' read -r rel branch path; do
         hay="${rel,,} ${branch,,}" ok=1
         for w in "${words[@]}"; do [[ "$hay" == *"${w,,}"* ]] || { ok=0; break; }; done
         ((ok)) || continue
-        IFS=/ read -ra parts <<< "$rel"
-        pre=""
-        for ((d = 0; d < ${#parts[@]}; d++)); do
-            pre="${pre:+$pre/}${parts[d]}"
-            [[ -v seen[$pre] ]] && continue
-            seen[$pre]=1
-            c=$dirc; ((d == ${#parts[@]} - 1)) && c=$hdr
-            printf '%*s%s%s%s\t\n' $((d * 2)) '' "$c" "${parts[d]}" "$rst"
-        done
-        printf '%*s%s\t%s\n' $((${#parts[@]} * 2)) '' "$branch" "$path"
+        if [[ ! -v seen[$rel] ]]; then
+            seen[$rel]=1
+            dir="" name="$rel"
+            [[ "$rel" == */* ]] && { dir="${rel%/*}/"; name="${rel##*/}"; }
+            rp=""; [ "$mode" = repo ] && rp="${rpath[$rel]}"
+            printf '%s%s%s%s%s%s\t%s\n' "$dirc" "$dir" "$rst" "$hdr" "$name" "$rst" "$rp"
+        fi
+        # repo mode lists every repo, but only repos with linked worktrees expand
+        [ "$mode" = repo ] && ((cnt[$rel] < 2)) && continue
+        if [ "$mode" = repo ]; then
+            info="${inf[$path]}"
+            printf '  %s%*s  %s\t\n' "$branch" $((bw - 2 - ${#branch})) '' "$info"
+        else
+            printf '  %s\t%s\n' "$branch" "$path"
+        fi
     done < "$file"
+}
+
+# branch_width SCANFILE: width of the indent + branch column, over the whole scan so the
+# columns stay put while filtering
+branch_width() {
+    awk -F'\t' -v repo="$([ "$mode" = repo ] && echo 1)" '
+        NR == FNR { c[$1]++; next }
+        !repo || c[$1] > 1 { l = 2 + length($2); if (l > m) m = l }
+        END { print m + 0 }' "$1" "$1"
+}
+
+# heading SCANFILE: column titles for repo mode, lined up with the columns `jq_cols` builds
+heading() {
+    printf '\e[2m%-*s  %-6s  %-9s  %-12s  %-4s  %s\e[0m\n' "$(branch_width "$1")" "Repo" Status Remote Changes Age Message
 }
 
 # move FILE up|down POS: print an fzf pos() action for the next worktree row, skipping headers
@@ -83,8 +136,8 @@ info() {
         ((shown++))
         ((i + 1 <= pos)) && cur=$shown
     done
-    total=$(wc -l < "$2")
-    if ((shown == total)); then echo "  $cur/$shown"; else echo "  $cur/$shown ($total)"; fi
+    if [ "$mode" = repo ]; then total=$(cut -f1 "$2" | uniq | wc -l); else total=$(wc -l < "$2"); fi
+    if ((shown == total)); then echo "$cur/$shown"; else echo "$cur/$shown ($total)"; fi
 }
 
 # preview PATH: ahead/behind, commits on top of the base, then the base's recent commits.
@@ -119,14 +172,40 @@ preview() {
     fi
 }
 
+# fill TMP PORT: repo mode background job. Run `wt list` for every repo in parallel, collect the
+# columns into TMP/info.tsv, then tell the running fzf (on PORT) to refresh its list once.
+fill() {
+    local tmp="$1" port="$2" self repo
+    self=$(readlink -f "$0")
+    while IFS= read -r repo; do
+        ( wt -C "$repo" list --format=json 2>/dev/null | jq -r "$jq_cols" > "$tmp/info.$$.${repo//\//_}" ) &
+    done < <(awk -F'\t' '{ c[$1]++; if (!($1 in p)) p[$1] = $3 } END { for (r in c) if (c[r] > 1) print p[r] }' "$tmp/scan")
+    wait
+    cat "$tmp"/info.$$.* > "$tmp/info.tsv" 2>/dev/null
+    rm -f "$tmp"/info.$$.*
+    curl -s -XPOST "localhost:$port" -d "transform:$self refresh $tmp \$FZF_POS {q}"
+}
+
+# refresh TMP POS QUERY: print the fzf action that re-renders the list and puts the cursor back
+refresh() {
+    printf 'reload-sync(%s render %s/scan %q | tee %s/cur)+pos(%s)' "$(readlink -f "$0")" "$1" "$3" "$1" "$2"
+}
+
 pick() {
     local self tmp sel
+    local -a prev=()
     self=$(readlink -f "$0")
     tmp=$(mktemp -d)
     trap "rm -rf '$tmp'" EXIT
     scan "$root" > "$tmp/scan"
     [ -s "$tmp/scan" ] || { echo "gcd-pick: no repos with worktrees under $root" >&2; return 1; }
     render "$tmp/scan" "" > "$tmp/cur"
+    # repo mode shows wt's columns on each row (filled in async) instead of a preview pane
+    if [ "$mode" = repo ]; then
+        prev=(--listen=0 --header="$(heading "$tmp/scan")" --bind "start:execute-silent($self fill $tmp \$FZF_PORT >/dev/null 2>&1 &)")
+    else
+        prev=(--preview="$self preview {2}" --preview-window=right:55%)
+    fi
 
     # Up/down jump straight to the next worktree row via transform, and filtering
     # reloads the tree so a match keeps its parent headers.
@@ -138,12 +217,13 @@ pick() {
         --bind "down,ctrl-n:transform:$self move $tmp/cur down \$FZF_POS" \
         --bind "up,ctrl-p:transform:$self move $tmp/cur up \$FZF_POS" \
         --bind "enter:transform:[ -n {2} ] && echo accept" \
-        --preview="$self preview {2}" --preview-window=right:55% < "$tmp/cur") || return 1
+        "${prev[@]}" < "$tmp/cur") || return 1
     printf '%s\n' "${sel#*$'\t'}"
 }
 
 cmd="${1:-pick}"
 case "$cmd" in
-    scan | render | move | info | preview | pick) shift $(($# > 0 ? 1 : 0)); "$cmd" "$@" ;;
-    *) echo "usage: gcd-pick [scan|render|move|info|preview]" >&2; exit 2 ;;
+    scan | render | heading | move | info | preview | fill | refresh | pick) shift $(($# > 0 ? 1 : 0)); "$cmd" "$@" ;;
+    repo) export GCD_MODE=repo; mode=repo; pick ;;
+    *) echo "usage: gcd-pick [repo|scan|render|move|info|preview]" >&2; exit 2 ;;
 esac
