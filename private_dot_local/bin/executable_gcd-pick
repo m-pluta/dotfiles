@@ -10,9 +10,13 @@ root="${GCD_ROOT:-$HOME/dev}"
 # GCD_MODE=repo (set by the `repo` subcommand): repo rows are the selectable ones,
 # worktrees are shown but not selectable, and every repo is listed.
 mode="${GCD_MODE:-worktree}"
-hdr=$'\e[1;38;2;255;40;40m'   # repo names
+hdr=$'\e[1;38;2;226;96;78m'   # repo names
 dirc=$'\e[2;37m'              # parent folders that are not repos
+wtc=$'\e[1;38;2;250;189;47m'  # worktree names
+brc=$'\e[38;2;255;255;255m'   # branches under a worktree (the checked-out one gets a chevron)
 rst=$'\e[0m'
+ownc='#fabd2f'                # preview: the branch's own commits
+basec='#bfa87a'               # preview: the base's commits
 
 # jq program for repo mode: "path<TAB>columns" per worktree from `wt list --format=json`.
 # Columns: status symbols, upstream ahead/behind, uncommitted diff, age, subject. Widths are
@@ -57,18 +61,43 @@ scan() {
     done < <(find "$root" -maxdepth 4 -name .git -type d -not -path '*/.worktrees/*' -printf '%h\n' | sort)
 }
 
+# branches SCANFILE: one "path<TAB>branch<TAB>current" line per branch to list under each worktree:
+# the branch it has checked out plus any branch named "<worktree dir>/...", version sorted.
+# "current" is 1 for the checked out branch.
+branches() {
+    local rel branch path name cur b
+    local -A main
+    while IFS=$'\t' read -r rel branch path; do
+        # a repo's first scan row is its main checkout, which isn't listed
+        [[ -v main[$rel] ]] || { main[$rel]=1; continue; }
+        name="${path##*/}" cur=""
+        [[ "$branch" != \(* ]] && cur="$branch"
+        { [ -n "$cur" ] && printf '%s\n' "$cur"
+          git -C "$path" for-each-ref --format='%(refname:short)' "refs/heads/$name" 2>/dev/null
+        } | sort -uV | while IFS= read -r b; do
+            printf '%s\t%s\t%s\n' "$path" "$b" "$([ "$b" = "$cur" ] && echo 1)"
+        done
+    done < "$1"
+}
+
 # render SCANFILE QUERY: one header row per repo ("dir/" in grey, repo name in red) with its
 # worktrees indented below, keeping only worktrees matching every query word (matched against
-# "repo branch") with their repo header always kept.
+# "repo worktree branches") with their repo header always kept. In worktree mode each worktree
+# lists its branches under it, without the "<worktree dir>/" prefix.
 # Rows whose path field is empty are not selectable, which is how move and info tell them apart.
+# Branch rows carry the branch as a third field.
 render() {
     local file="$1" q="$2"
-    local rel branch path info w hay ok rp bw p s dir name
-    local -A seen inf rpath cnt
+    local rel branch path info w hay ok rp bw p s dir name wname label extra b cur short mark wp
+    local -A seen inf rpath cnt bl bh
     local -a words
     read -ra words <<< "$q"
     # wt's columns arrive later from `fill`, so rows have none until info.tsv exists
     [ -f "${file%/*}/info.tsv" ] && while IFS=$'\t' read -r p s; do inf[$p]=$s; done < "${file%/*}/info.tsv"
+    [ "$mode" != repo ] && [ -f "${file%/*}/branches" ] && while IFS=$'\t' read -r p b cur; do
+        bl[$p]+="$b"$'\t'"$cur"$'\n'
+        bh[$p]+=" $b"
+    done < "${file%/*}/branches"
     bw=$(branch_width "$file")
     # a repo's path is its first scan row (the main worktree), even when filtering hides that row
     while IFS=$'\t' read -r rel _ path; do
@@ -76,7 +105,11 @@ render() {
         cnt[$rel]=$((cnt[$rel] + 1))
     done < "$file"
     while IFS=$'\t' read -r rel branch path; do
+        # the main checkout isn't listed in worktree mode, its repo's linked worktrees are
+        [ "$mode" != repo ] && [[ "$path" == "${rpath[$rel]}" ]] && continue
+        wname="${path##*/}"
         hay="${rel,,} ${branch,,}" ok=1
+        [ "$mode" != repo ] && hay+=" ${wname,,}${bh[$path],,}"
         for w in "${words[@]}"; do [[ "$hay" == *"${w,,}"* ]] || { ok=0; break; }; done
         ((ok)) || continue
         if [[ ! -v seen[$rel] ]]; then
@@ -92,7 +125,17 @@ render() {
             info="${inf[$path]}"
             printf '  %s%*s  %s\t\n' "$branch" $((bw - 2 - ${#branch})) '' "$info"
         else
-            printf '  %s\t%s\n' "$branch" "$path"
+            label="$wname" extra=""
+            [[ "$branch" == \(* ]] && extra=" ${dirc}${branch}${rst}"
+            # the branch rows below are what you pick, unless there are none (detached HEAD)
+            wp="$path"; [ -n "${bl[$path]}" ] && wp=""
+            printf '  %s%s%s%s\t%s\n' "$wtc" "$label" "$rst" "$extra" "$wp"
+            while IFS=$'\t' read -r b cur; do
+                [ -n "$b" ] || continue
+                short="$b"; [[ "$b" == "$wname"/* ]] && short="${b#"$wname"/}"
+                mark="  "; [ -n "$cur" ] && mark="▸ "
+                printf '    %s%s%s%s\t%s\t%s\n' "$brc" "$mark" "$short" "$rst" "$path" "$b"
+            done <<< "${bl[$path]}"
         fi
     done < "$file"
 }
@@ -136,14 +179,16 @@ info() {
         ((shown++))
         ((i + 1 <= pos)) && cur=$shown
     done
-    if [ "$mode" = repo ]; then total=$(cut -f1 "$2" | uniq | wc -l); else total=$(wc -l < "$2"); fi
+    if [ "$mode" = repo ]; then total=$(cut -f1 "$2" | uniq | wc -l)
+    else total=$(render "$2" "" | grep -c $'\t.'); fi
     if ((shown == total)); then echo "$cur/$shown"; else echo "$cur/$shown ($total)"; fi
 }
 
-# preview PATH: ahead/behind, then the branch's own commits on top of the base's history.
-# Base is the branch checked out in the repo's main worktree, else local main/master.
+# preview PATH [BRANCH]: ahead/behind, then the branch's own commits on top of the base's history.
+# BRANCH defaults to what the worktree has checked out. Base is the branch checked out in the
+# repo's main worktree, else local main/master.
 preview() {
-    local p="$1" base b up ab mb
+    local p="$1" ref="${2:-HEAD}" base b up ab mb
     [ -z "$p" ] && return
     local g=(git -C "$p")
     base=$(git -C "$("${g[@]}" worktree list --porcelain | sed -n '1s/^worktree //p')" symbolic-ref -q --short HEAD)
@@ -152,9 +197,9 @@ preview() {
             "${g[@]}" rev-parse -q --verify "$b" >/dev/null && { base=$b; break; }
         done
     fi
-    up=$("${g[@]}" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null)
+    up=$("${g[@]}" rev-parse --abbrev-ref --symbolic-full-name "$ref@{upstream}" 2>/dev/null)
     if [ -n "$up" ]; then
-        ab=$("${g[@]}" rev-list --left-right --count "$up"...HEAD)
+        ab=$("${g[@]}" rev-list --left-right --count "$up"..."$ref")
         printf '\e[32m↑%s\e[0m \e[31m↓%s\e[0m \e[2m%s\e[0m\n' "${ab#*$'\t'}" "${ab%$'\t'*}" "$up"
     else
         printf '\e[2mno upstream\e[0m\n'
@@ -162,12 +207,12 @@ preview() {
     printf '\n'
     # one continuous list: this branch's own commits in green, then the base's commits from the
     # fork point down in yellow. Long enough to fill the pane and be scrolled.
-    mb=$([ -n "$base" ] && "${g[@]}" merge-base "$base" HEAD 2>/dev/null)
+    mb=$([ -n "$base" ] && "${g[@]}" merge-base "$base" "$ref" 2>/dev/null)
     if [ -n "$mb" ]; then
-        "${g[@]}" log --color=always --format='%C(green)%h%C(reset) %s' "$mb"..HEAD
-        "${g[@]}" log -n 500 --color=always --format='%C(yellow)%h%C(reset) %C(dim)%s%C(reset)' "$mb"
+        "${g[@]}" log --color=always --format="%C($ownc)%h%C(reset) %s" "$mb".."$ref"
+        "${g[@]}" log -n 500 --color=always --format="%C($basec)%h%C(reset) %C(dim)%s%C(reset)" "$mb"
     else
-        "${g[@]}" log -n 500 --color=always --format='%C(yellow)%h%C(reset) %C(dim)%s%C(reset)'
+        "${g[@]}" log -n 500 --color=always --format="%C($basec)%h%C(reset) %C(dim)%s%C(reset)" "$ref"
     fi
 }
 
@@ -198,12 +243,13 @@ pick() {
     trap "rm -rf '$tmp'" EXIT
     scan "$root" > "$tmp/scan"
     [ -s "$tmp/scan" ] || { echo "gcd-pick: no repos with worktrees under $root" >&2; return 1; }
+    [ "$mode" = repo ] || branches "$tmp/scan" > "$tmp/branches"
     render "$tmp/scan" "" > "$tmp/cur"
     # repo mode shows wt's columns on each row (filled in async) instead of a preview pane
     if [ "$mode" = repo ]; then
         prev=(--listen=0 --header="$(heading "$tmp/scan")" --bind "start:execute-silent($self fill $tmp \$FZF_PORT >/dev/null 2>&1 &)")
     else
-        prev=(--preview="$self preview {2}" --preview-window=right:55%
+        prev=(--preview="$self preview {2} {3}" --preview-window=right:55%
             --bind "shift-up:preview-up,shift-down:preview-down,page-up:preview-page-up,page-down:preview-page-down")
     fi
 
@@ -218,12 +264,24 @@ pick() {
         --bind "up,ctrl-p:transform:$self move $tmp/cur up \$FZF_POS" \
         --bind "enter:transform:[ -n {2} ] && echo accept" \
         "${prev[@]}" < "$tmp/cur") || return 1
-    printf '%s\n' "${sel#*$'\t'}"
+    # a worktree row gives "path", a branch row gives "path<TAB>branch"
+    sel="${sel#*$'\t'}"
+    local path="${sel%%$'\t'*}" br=""
+    [[ "$sel" == *$'\t'* ]] && br="${sel#*$'\t'}"
+    # picking a branch that isn't checked out switches to it, unless tracked files have changes
+    if [ -n "$br" ] && [ "$(git -C "$path" symbolic-ref -q --short HEAD)" != "$br" ]; then
+        if git -C "$path" diff --quiet HEAD -- 2>/dev/null; then
+            git -C "$path" switch -q "$br" >&2 || echo "gcd-pick: could not switch to $br" >&2
+        else
+            echo "gcd-pick: $path has uncommitted changes, not switching to $br" >&2
+        fi
+    fi
+    printf '%s\n' "$path"
 }
 
 cmd="${1:-pick}"
 case "$cmd" in
-    scan | render | heading | move | info | preview | fill | refresh | pick) shift $(($# > 0 ? 1 : 0)); "$cmd" "$@" ;;
+    scan | branches | render | heading | move | info | preview | fill | refresh | pick) shift $(($# > 0 ? 1 : 0)); "$cmd" "$@" ;;
     repo) export GCD_MODE=repo; mode=repo; pick ;;
-    *) echo "usage: gcd-pick [repo|scan|render|move|info|preview]" >&2; exit 2 ;;
+    *) echo "usage: gcd-pick [repo|scan|branches|render|move|info|preview]" >&2; exit 2 ;;
 esac
