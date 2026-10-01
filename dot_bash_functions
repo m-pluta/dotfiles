@@ -296,3 +296,48 @@ gcw() {
     done
     rm -f "$out"
 }
+
+# Completion for `git sdiff [<name>] [<old> [<new>]]` (script: ~/.local/bin/git-sdiff).
+# With no name given, versions are those of the checked-out <name>/v<n> branch's series.
+# <old> completes to versions older than <new>, which is the checked-out one by default.
+_git_sdiff() {
+    if [[ $cur == -* ]]; then
+        __gitcomp "--no-dual-color --creation-factor= --no-color --stat"
+        return
+    fi
+
+    local head_name head_ver name i args=() all lo=0 hi cands=
+    read -r head_name head_ver < <(git symbolic-ref -q --short HEAD 2>/dev/null |
+        sed -n 's|^\(.*\)/v\([0-9][0-9]*\)$|\1 \2|p')
+    for ((i = 2; i < cword; i++)); do
+        [[ ${words[i]} == -* ]] || args+=("${words[i]}")
+    done
+    if [ ${#args[@]} -gt 0 ] && ! [[ ${args[0]} =~ ^v?[0-9]+$ ]]; then
+        name=${args[0]}
+        args=("${args[@]:1}")
+    elif [ -n "$head_name" ]; then
+        name=$head_name
+    fi
+
+    if [ ${#args[@]} -eq 0 ]; then
+        if [ -z "$name" ]; then
+            __gitcomp "$(git for-each-ref --format='%(refname:strip=2)' 'refs/heads/*/v*' 2>/dev/null |
+                sed -n 's|/v[0-9][0-9]*$||p' | sort -u)"
+            return
+        fi
+        # the series name is also valid here when it was inferred from the branch
+        [ "$name" = "$head_name" ] && [ -z "${words[2]:-}" -o $cword -eq 2 ] && cands=$name
+    fi
+
+    all=$(git for-each-ref --format='%(refname:strip=3)' "refs/heads/$name/v*" 2>/dev/null |
+        sed -n 's/^v\([0-9][0-9]*\)$/\1/p' | sort -n)
+    if [ ${#args[@]} -eq 0 ]; then
+        hi=${head_ver:-$(tail -1 <<<"$all")}
+        [ "$name" = "$head_name" ] || hi=$(tail -1 <<<"$all")
+        cands="$cands $(awk -v h="$hi" '$1 < h { print "v" $1 }' <<<"$all")"
+    elif [ ${#args[@]} -eq 1 ]; then
+        lo=${args[0]#v}
+        cands=$(awk -v l="$lo" '$1 > l { print "v" $1 }' <<<"$all")
+    fi
+    __gitcomp "$cands"
+}
