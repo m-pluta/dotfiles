@@ -104,13 +104,18 @@ count() {
 	printf '\033[%sm%s\033[0m' "$2" "$1"
 }
 
-heading="($name) v${old:-nothing} vs. v$new"
-heading=${heading/vnothing/nothing}
+# label a version, marking the one that is checked out
+label() {
+	[ -n "$1" ] || { echo nothing; return; }
+	if [ "$head" = "$name/v$1" ]; then echo "v$1 (current)"; else echo "v$1"; fi
+}
+versions_label="$(label "$old") vs. $(label "$new")"
+heading="($name) $versions_label"
 if [ -t 1 ]; then
 	color=--color
 	pager=$(git var GIT_PAGER)
 	title=$(printf '\033[1;38;2;250;189;47m(%s)\033[0m \033[1m%s\033[0m   %s  %s  %s  %s' \
-		"$name" "${heading#"($name) "}" \
+		"$name" "$versions_label" \
 		"$(count "$dropped" 31)" "$(count "$added" 32)" \
 		"$(count "$changed" 33)" "$(count "$same" 2)")
 	plain="$heading   $dropped  $added  $changed  $same"
