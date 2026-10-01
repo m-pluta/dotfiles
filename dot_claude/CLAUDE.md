@@ -10,6 +10,7 @@ For kernel patch work (infer the tree from the task, ask if unsure), use one wor
 - Branches are `<name>/v1`, `<name>/v2`... (`<n>` below is the version number), each new one cut from the last. This replaces the worktree skill's branch-name question.
 - Before creating, check `git branch --list '<name>/*'` and `git tag --list '<name>-v*'` are empty, and no branch is named exactly `<name>` (it would block `<name>/v1`).
 - Once a version has been emailed to the mailing list as patches, tag it `<name>-v<n>` (never with `-f`) and never rewrite that branch.
+- Write `git format-patch` output (patches and cover letter) to `~/dev/patches/<repo>/<name>/v<n>/` (`<repo>` is the main checkout's directory name), never inside the repo.
 
 ## Config management
 
