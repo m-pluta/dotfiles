@@ -16,6 +16,9 @@ else
 		((${#revs[@]})) && break
 	done
 	((${#revs[@]})) || mapfile -t revs < <(git rev-list --reverse -n 20 HEAD)
+	# working tree changes come last, so the viewer opens on them
+	git diff --cached --quiet || revs+=(:staged)
+	git diff --quiet || revs+=(:unstaged)
 fi
 ((${#revs[@]})) || { echo "git idiff: no commits to show" >&2; exit 1; }
 
@@ -27,8 +30,20 @@ lines=()
 title=
 
 load() {
-	title=$(git show -s --format='%h %s' "${revs[idx]}")
-	mapfile -t lines < <(git show --no-color --format='%an <%ae>%n%ad%n%n%B' --stat --patch "${revs[idx]}" | expand -t4)
+	case ${revs[idx]} in
+	:staged)
+		title='staged changes'
+		mapfile -t lines < <(git diff --no-color --cached --stat --patch | expand -t4)
+		;;
+	:unstaged)
+		title='unstaged changes'
+		mapfile -t lines < <(git diff --no-color --stat --patch | expand -t4)
+		;;
+	*)
+		title=$(git show -s --format='%h %s' "${revs[idx]}")
+		mapfile -t lines < <(git show --no-color --format='%an <%ae>%n%ad%n%n%B' --stat --patch "${revs[idx]}" | expand -t4)
+		;;
+	esac
 	top=0
 }
 
