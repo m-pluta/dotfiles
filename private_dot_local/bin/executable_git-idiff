@@ -33,15 +33,15 @@ load() {
 	case ${revs[idx]} in
 	:staged)
 		title='staged changes'
-		mapfile -t lines < <(git diff --no-color --cached --stat --patch | expand -t4)
+		mapfile -t lines < <(git diff --no-ext-diff --no-color --cached --stat --patch | expand -t4)
 		;;
 	:unstaged)
 		title='unstaged changes'
-		mapfile -t lines < <(git diff --no-color --stat --patch | expand -t4)
+		mapfile -t lines < <(git diff --no-ext-diff --no-color --stat --patch | expand -t4)
 		;;
 	*)
 		title=$(git show -s --format='%h %s' "${revs[idx]}")
-		mapfile -t lines < <(git show --no-color --format='%an <%ae>%n%ad%n%n%B' --stat --patch "${revs[idx]}" | expand -t4)
+		mapfile -t lines < <(git show --no-ext-diff --no-color --format='%an <%ae>%n%ad%n%n%B' --stat --patch "${revs[idx]}" | expand -t4)
 		;;
 	esac
 	top=0
