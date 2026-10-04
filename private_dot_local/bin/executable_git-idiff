@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# git idiff [<rev-list args>] - interactive per-commit diff viewer.
+# left/right (h/l) switch commits, up/down/j/k scroll, space/b page, ctrl-d/u half page,
+# g/G top/bottom, q quits.
+# Default range: commits not on the upstream (or main/master), else the last 20.
+
+set -u
+
+revs=()
+if (($#)); then
+	mapfile -t revs < <(git rev-list --reverse "$@") || exit 1
+else
+	for base in '@{upstream}' origin/main origin/master main master; do
+		git rev-parse --verify -q "$base" >/dev/null || continue
+		mapfile -t revs < <(git rev-list --reverse "$base..HEAD")
+		((${#revs[@]})) && break
+	done
+	((${#revs[@]})) || mapfile -t revs < <(git rev-list --reverse -n 20 HEAD)
+fi
+((${#revs[@]})) || { echo "git idiff: no commits to show" >&2; exit 1; }
+
+bold=$'\e[1m' dim=$'\e[2m' red=$'\e[31m' green=$'\e[32m' cyan=$'\e[36m' off=$'\e[0m'
+
+idx=$((${#revs[@]} - 1))
+top=0
+lines=()
+title=
+
+load() {
+	title=$(git show -s --format='%h %s' "${revs[idx]}")
+	mapfile -t lines < <(git show --no-color --format='%an <%ae>%n%ad%n%n%B' --stat --patch "${revs[idx]}" | expand -t4)
+	top=0
+}
+
+draw() {
+	local h w view i line head pct c
+	h=$(tput lines) w=$(tput cols)
+	view=$((h - 3))
+	((view < 1)) && view=1
+	local max=$((${#lines[@]} - view))
+	((max < 0)) && max=0
+	((top > max)) && top=$max
+	((top < 0)) && top=0
+
+	head="[$((idx + 1))/${#revs[@]}] $title"
+	head=${head:0:w-1}
+	printf '\e[H\e[2J%*s%s%s%s\n\n' $(((w - ${#head}) / 2)) '' "$bold" "$head" "$off"
+	for ((i = top; i < top + view && i < ${#lines[@]}; i++)); do
+		line=${lines[i]:0:w-1}
+		case $line in
+		'+++'* | '---'* | 'diff --git'* | 'index '*) c=$bold ;;
+		@@*) c=$cyan ;;
+		+*) c=$green ;;
+		-*) c=$red ;;
+		*) c= ;;
+		esac
+		printf '%s%s%s\n' "$c" "$line" "$off"
+	done
+	if ((${#lines[@]} <= view)); then pct=100; else pct=$((100 * (top + view) / ${#lines[@]})); fi
+	printf '\e[%d;1H%s%d%%  <-/-> commit  q quit%s' "$h" "$dim" "$pct" "$off"
+}
+
+cleanup() { tput rmcup; tput cnorm; }
+trap cleanup EXIT
+tput smcup
+tput civis
+
+load
+while :; do
+	draw
+	IFS= read -rsn1 k || break
+	[[ $k == $'\e' ]] && { read -rsn2 -t 0.01 rest; k+=$rest; }
+	view=$(($(tput lines) - 3))
+	case $k in
+	q | $'\e') break ;;
+	$'\e[D' | h) ((idx > 0)) && { ((idx--)); load; } ;;
+	$'\e[C' | l) ((idx < ${#revs[@]} - 1)) && { ((idx++)); load; } ;;
+	$'\e[B' | j) ((top++)) ;;
+	$'\e[A' | k) ((top--)) ;;
+	' ' | $'\e[6~') ((top += view)) ;;
+	b | $'\e[5~') ((top -= view)) ;;
+	$'\x04') ((top += view / 2)) ;;
+	$'\x15') ((top -= view / 2)) ;;
+	g | $'\e[H') top=0 ;;
+	G | $'\e[F') top=${#lines[@]} ;;
+	esac
+done
