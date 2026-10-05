@@ -97,6 +97,12 @@ Write to `<scratchpad>/<worktree-name>-layout.kdl`, where `<scratchpad>` is this
 zellij action new-tab --layout <scratchpad>/<worktree-name>-layout.kdl
 ```
 
+After the last new tab is open, return focus to the pane this session runs in (each `new-tab` steals focus). `focus-pane-id` also switches back to that pane's tab:
+
+```bash
+zellij action focus-pane-id "terminal_$ZELLIJ_PANE_ID"
+```
+
 ## 7. Report back
 
 Repo, worktree path, branch (new or reused), and whether/why a tab was opened.
