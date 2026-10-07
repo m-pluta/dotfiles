@@ -32,11 +32,10 @@
     [
       {
         "id": "be56bf6e-9814-48fc-a474-b0c1d716f667",
-        "type": "cache-timer",
-        "rawValue": true,
-        "metadata": {
-          "ttlSeconds": "3600"
-        }
+        "type": "custom-command",
+        "commandPath": "python3 $HOME/.config/ccstatusline/cache-timer.py",
+        "timeout": 1000,
+        "preserveColors": true
       },
       {
         "id": "984e3318-8171-4033-92b6-f89fcd91a8f0",
