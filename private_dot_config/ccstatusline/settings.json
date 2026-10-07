@@ -3,67 +3,84 @@
   "lines": [
     [
       {
-        "id": "533888b6-94cd-4340-9118-e9dae0f2bfe2",
-        "type": "context-bar",
-        "color": "brightWhite"
-      },
-      {
-        "id": "8746f231-f7c0-46fe-91c5-298bdc2bc4e2",
-        "type": "flex-separator"
-      },
-      {
-        "id": "e6362bfa-3b85-431d-8505-c88815e5f21f",
-        "type": "reset-timer",
-        "color": "brightBlack"
-      },
-      {
-        "id": "3fd5dbba-126b-4053-8b7e-05934dc6dbe5",
-        "type": "separator"
-      },
-      {
-        "id": "74422e7f-0e92-4e7c-b35f-fc767c5b153c",
-        "type": "session-usage",
-        "color": "brightYellow"
-      }
-    ],
-    [
-      {
         "id": "08a81cdd-23b9-47a3-b49a-b13c0d812224",
         "type": "model",
-        "color": "cyan"
+        "color": "green",
+        "rawValue": true
       },
       {
-        "id": "54940f05-c1e1-49fb-9291-d1d8d48e3547",
+        "id": "b63a988e-962e-4c6c-9a07-33a96c395273",
         "type": "separator"
       },
       {
         "id": "6019d432-5668-4810-aa0d-1141552c5399",
         "type": "thinking-effort",
-        "color": "brightCyan"
+        "color": "brightGreen",
+        "rawValue": true
       },
       {
-        "id": "f59d7e9b-58bf-4d58-b2bd-83435c2eebe4",
-        "type": "flex-separator"
+        "id": "247e6146-3c17-4689-8c33-72909026a919",
+        "type": "separator"
+      },
+      {
+        "id": "533888b6-94cd-4340-9118-e9dae0f2bfe2",
+        "type": "context-bar",
+        "color": "brightWhite",
+        "rawValue": true
+      },
+      {
+        "id": "603b255e-137f-4f27-88c4-9d47c887d5b1",
+        "type": "separator"
+      },
+      {
+        "id": "be56bf6e-9814-48fc-a474-b0c1d716f667",
+        "type": "cache-timer",
+        "rawValue": true
+      }
+    ],
+    [
+      {
+        "id": "e6362bfa-3b85-431d-8505-c88815e5f21f",
+        "type": "reset-timer",
+        "color": "brightBlack",
+        "rawValue": true
+      },
+      {
+        "id": "84ef15ca-49f8-4123-95e8-fdf54144f013",
+        "type": "separator"
+      },
+      {
+        "id": "74422e7f-0e92-4e7c-b35f-fc767c5b153c",
+        "type": "session-usage",
+        "color": "brightYellow",
+        "rawValue": true
+      },
+      {
+        "id": "61b5195b-d987-4fc6-8da8-56afc7c7a10d",
+        "type": "separator"
       },
       {
         "id": "302abd05-3c36-4ce9-b6a5-15b0e913bda6",
         "type": "weekly-reset-timer",
-        "color": "brightBlack"
+        "color": "brightBlack",
+        "rawValue": true
       },
       {
-        "id": "2abdac22-6dde-40c1-8e76-4de90c7738ab",
+        "id": "76af6995-a3f3-4810-8a20-302d7d90e606",
         "type": "separator"
       },
       {
         "id": "46d7b7fb-0f43-4f12-9231-cc98acc61c7e",
         "type": "weekly-usage",
-        "color": "brightYellow"
+        "color": "brightYellow",
+        "rawValue": true
       }
     ],
     [
       {
         "id": "6b7f6c9d-b3b3-4457-a6f7-c72bfbd3500b",
-        "type": "skills"
+        "type": "skills",
+        "rawValue": true
       }
     ]
   ],
