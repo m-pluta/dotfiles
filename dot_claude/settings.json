@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx -y ccstatusline@latest --hook"
+            "command": "NODE_COMPILE_CACHE=$HOME/.cache/ccstatusline-node ccstatusline --hook"
           }
         ]
       },
@@ -49,7 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "npx -y ccstatusline@latest --hook"
+            "command": "NODE_COMPILE_CACHE=$HOME/.cache/ccstatusline-node ccstatusline --hook"
           }
         ]
       }
@@ -60,8 +60,9 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "npx -y ccstatusline@latest",
-    "padding": 0
+    "command": "NODE_COMPILE_CACHE=$HOME/.cache/ccstatusline-node ccstatusline",
+    "padding": 0,
+    "refreshInterval": 1
   },
   "enabledPlugins": {
     "code-simplifier@claude-plugins-official": true,
