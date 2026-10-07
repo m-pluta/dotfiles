@@ -27,18 +27,21 @@
         "type": "context-bar",
         "color": "brightWhite",
         "rawValue": true
-      },
-      {
-        "id": "603b255e-137f-4f27-88c4-9d47c887d5b1",
-        "type": "separator"
-      },
-      {
-        "id": "be56bf6e-9814-48fc-a474-b0c1d716f667",
-        "type": "cache-timer",
-        "rawValue": true
       }
     ],
     [
+      {
+        "id": "be56bf6e-9814-48fc-a474-b0c1d716f667",
+        "type": "cache-timer",
+        "rawValue": true,
+        "metadata": {
+          "ttlSeconds": "3600"
+        }
+      },
+      {
+        "id": "984e3318-8171-4033-92b6-f89fcd91a8f0",
+        "type": "separator"
+      },
       {
         "id": "e6362bfa-3b85-431d-8505-c88815e5f21f",
         "type": "reset-timer",
