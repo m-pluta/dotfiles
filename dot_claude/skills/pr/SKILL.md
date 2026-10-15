@@ -25,10 +25,24 @@ git remote -v
 
 `type(scope): description`, following the `commit-style` skill's normal-repo rules (imperative, no trailing period, scope discovered from `git log` rather than invented). Base it on the PR as a whole, not any single commit in it.
 
-## 4. Draft the body — two parts only
+## 4. Draft the body — two parts, plus a squash commit message
 
 1. **Purpose** — max 2 sentences, plain language. No jargon, no AI-isms: banned words/phrases include "leverage", "seamless", "robust", "comprehensive", "ensure", "delve", "this PR introduces/enhances", and no emoji or em dashes used for dramatic effect. Just say what it's for.
 2. **Changes** — a short bullet list of only the broad, significant changes. Use `git log <base>..HEAD --oneline` as a starting point, then condense and filter: skip tiny things (formatting, typo fixes, minor renames). Usually 2-5 bullets, not one per commit.
+
+3. **Squash commit message** (non-kernel repos only) — the body of the commit the PR will be squash-merged as, in a collapsed block at the end. Body only: leave out the subject line, since the PR title becomes it. Write it with the `commit-style` skill's normal-repo rules, as prose wrapped at ~72 columns:
+
+   ````
+   <details>
+   <summary>Squash commit message</summary>
+
+   ```
+   <What the change does and why, as plain prose wrapped at about 72
+   columns. No subject line.>
+   ```
+
+   </details>
+   ````
 
 Nothing else goes in the body — no "Testing" section, no checklists, no generated boilerplate.
 
