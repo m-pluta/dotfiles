@@ -174,5 +174,5 @@ fi
 
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init bash)"; fi
 
-# Untracked secrets (API keys etc.), kept out of chezmoi
+# Secrets (API keys etc.), stored age-encrypted in chezmoi
 [ -f "$HOME/.secrets" ] && . "$HOME/.secrets"
