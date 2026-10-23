@@ -173,3 +173,6 @@ if [ -n "$CLAUDE_CODE_SESSION_ID" ]; then
 fi
 
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init bash)"; fi
+
+# Untracked secrets (API keys etc.), kept out of chezmoi
+[ -f "$HOME/.secrets" ] && . "$HOME/.secrets"
