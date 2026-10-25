@@ -4,7 +4,7 @@ Always use the `commit-style` skill when writing any git commit message, in any 
 
 ## Worktrees
 
-Use `<repo>/.worktrees/<name>`. All work happens there. The main checkout stays a clean copy of upstream: never edit, commit or build in it.
+Use `<repo>/.worktrees/<name>`. All work happens there. The main checkout stays a clean copy of upstream: never edit, commit or build in it. If the worktree has a `.envrc`, run `direnv allow` in it.
 
 ## Kernel patch series
 
