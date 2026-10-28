@@ -1,0 +1,36 @@
+#!/bin/bash
+# Runs the real ssh-keygen, but draws a big "4" inside the randomart box.
+set -o pipefail
+
+/usr/bin/ssh-keygen "$@" | perl -e '
+	$| = 1;
+	my @four = (
+		"                 ",
+		"        444      ",
+		"       4 44      ",
+		"      4  44      ",
+		"     4   44      ",
+		"    444444444    ",
+		"         44      ",
+		"        4444     ",
+		"                 ",
+	);
+	my ($buf, $art) = ("", 0);
+	while (sysread(STDIN, my $chunk, 4096)) {
+		$buf .= $chunk;
+		while ($buf =~ s/^([^\n]*\n)//) {
+			my $l = $1;
+			if ($art) {
+				next unless $l =~ /^\+/;
+				print "|$_|\n" for @four;
+				$art = 0;
+			} elsif ($l =~ /^\+-+\[/) {
+				$art = 1;
+			}
+			print $l;
+		}
+		# Flush partial lines (prompts) unless they could start a randomart box
+		if ($buf ne "" && !$art && $buf !~ /^\+/) { print $buf; $buf = "" }
+	}
+	print $buf unless $art;
+'
