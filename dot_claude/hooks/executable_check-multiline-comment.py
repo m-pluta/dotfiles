@@ -3,8 +3,9 @@
 
 Reads the hook JSON on stdin. If the edited/written text introduces a
 multi-line comment block, emits a permissionDecision "ask" so the user is
-prompted instead of the edit silently going through. A single-line comment,
-however long, is never flagged.
+prompted instead of the edit silently going through. Any run of at least
+min_lines consecutive line comments is flagged, and that is currently 1,
+so every line comment is.
 """
 import json
 import re
@@ -15,6 +16,7 @@ CODE_EXTS = {
     "rs", "go", "java", "kt", "swift",
     "js", "jsx", "ts", "tsx", "mjs", "cjs",
     "sh", "bash", "zsh",
+    "nix", "py", "lua", "toml", "yaml", "yml",
     "css", "scss", "less",
     "html", "htm", "xml",
 }
@@ -26,7 +28,7 @@ STANDALONE_TRIPLE_RE = re.compile(
 )
 
 
-def consecutive_line_comment_block(text, markers, min_lines=3):
+def consecutive_line_comment_block(text, markers, min_lines=1):
     lines = text.split("\n")
     run = 0
     for line in lines:
