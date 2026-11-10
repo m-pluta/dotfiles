@@ -341,3 +341,14 @@ _git_sdiff() {
     fi
     __gitcomp "$cands"
 }
+
+# herdr only splits right/down, so split then swap and move focus to the new pane
+__herdr_split_before() {
+    local split=$1 back=$2 cur new
+    cur=$(herdr pane current | jq -r .result.pane.pane_id) || return
+    new=$(herdr pane split --current --direction "$split" | jq -r .result.pane.pane_id) || return
+    herdr pane swap --source-pane "$cur" --target-pane "$new" >/dev/null &&
+        herdr pane focus --current --direction "$back" >/dev/null
+}
+splitleft() { __herdr_split_before right left; }
+splitup() { __herdr_split_before down up; }
