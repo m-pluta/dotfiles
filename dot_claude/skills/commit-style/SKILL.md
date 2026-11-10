@@ -24,6 +24,7 @@ Two modes, auto-detected per repo. If detection is ambiguous, ask the user which
 - **Never add a `Co-Authored-By: Claude` or any Claude/Anthropic attribution trailer.** The only acceptable AI-attribution trailer is `Assisted-by: LLM`, and only in kernel-tree mode, and only when an LLM genuinely helped draft/analyze that specific commit — it is not added automatically to every commit.
 - Write in imperative mood ("Fix", "Add", "Move" — not "Fixes", "Added", "Moves").
 - No emojis.
+- Write the subject and body in ASD-STE100 Simplified Technical English. Use the `asd-ste100` skill to check the wording. Code identifiers, trailers and quoted output stay as they are.
 
 ## Kernel-tree mode
 

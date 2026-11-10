@@ -30,6 +30,8 @@ git remote -v
 1. **Purpose** — max 2 sentences, plain language. No jargon, no AI-isms: banned words/phrases include "leverage", "seamless", "robust", "comprehensive", "ensure", "delve", "this PR introduces/enhances", and no emoji or em dashes used for dramatic effect. Just say what it's for.
 2. **Changes** — a short bullet list of only the broad, significant changes. Use `git log <base>..HEAD --oneline` as a starting point, then condense and filter: skip tiny things (formatting, typo fixes, minor renames). Usually 2-5 bullets, not one per commit.
 
+Write the title and body in ASD-STE100 Simplified Technical English. Use the `asd-ste100` skill to check the wording. Code identifiers stay as they are.
+
 Nothing else goes in the body — no "Testing" section, no checklists, no generated boilerplate.
 
 ## 5. Show the draft, then create it
