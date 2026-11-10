@@ -11,6 +11,8 @@ The body of the commit the PR will be squash-merged as. Body only: leave out the
 
 Follow the `commit-style` skill's normal-repo rules. Plain prose wrapped at ~72 columns, describing what the change does and why, based on the PR as a whole rather than any single commit.
 
+Write it in ASD-STE100 Simplified Technical English. Use the `asd-ste100` skill to check the wording. Code identifiers stay as they are.
+
 ## 2. Add it to the PR body
 
 Append it to the end of the body, after everything else:
