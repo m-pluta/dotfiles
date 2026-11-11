@@ -38,6 +38,15 @@
             "command": "~/.claude/hooks/ask-public-forge-action.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash|Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/deny-claude-attribution.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
