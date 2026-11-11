@@ -23,3 +23,7 @@ For kernel patch work (infer the tree from the task, ask if unsure), use one wor
 ## Config management
 
 My dotfiles and config in `~` (including `~/.claude`) are managed by chezmoi (source: `~/.local/share/chezmoi`). After changing any of them, run `chezmoi status` and sync it (`chezmoi add` new files, `chezmoi forget` deleted/renamed ones). Commit and push the chezmoi source repo after each independent change, rather than batching unrelated changes into one commit.
+
+## PR and issue links
+
+Whenever you mention a PR or issue you just opened, always include its full URL. Never give only the number.
