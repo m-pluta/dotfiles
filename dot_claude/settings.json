@@ -31,10 +31,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/block-forge-push.sh"
-          },
-          {
-            "type": "command",
             "command": "~/.claude/hooks/ask-send-email.sh"
           },
           {
